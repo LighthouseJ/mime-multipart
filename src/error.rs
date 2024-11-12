@@ -69,8 +69,28 @@ impl From<FromUtf8Error> for Error {
 impl Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            Error::Httparse(ref e) =>
-                format!("Httparse: {:?}", e).fmt(f),
+            Error::NoRequestContentType => 
+                write!(f, "No request Content-Type"),
+            Error::NotMultipart => 
+                write!(f, "Not a multipart"),
+            Error::BoundaryNotSpecified => 
+                write!(f, "Boundary not specified"),
+            Error::PartialHeaders => 
+                write!(f, "Partial headers"),
+            Error::EofInMainHeaders => 
+                write!(f, "EOF in Main headers"),
+            Error::EofBeforeFirstBoundary => 
+                write!(f, "EOF Before First boundary"),
+            Error::NoCrLfAfterBoundary => 
+                write!(f, "No CR-LF After boundary"),
+            Error::EofInPartHeaders => 
+                write!(f, "EOF in Partial headers"),
+            Error::EofInFile => 
+                write!(f, "EOF in File"),
+            Error::EofInPart => 
+                write!(f, "EOF in Part"),
+            Error::Httparse(error) =>
+                write!(f, "Httparse: {error}"),
             Error::Io(ref e) =>
                 format!("Io: {}", e).fmt(f),
             Error::Hyper(ref e) =>
@@ -79,7 +99,6 @@ impl Display for Error {
                 format!("Utf8: {}", e).fmt(f),
             Error::Decoding(ref e) =>
                 format!("Decoding: {}", e).fmt(f),
-            _ => format!("{}", self).fmt(f),
         }
     }
 }
@@ -123,5 +142,25 @@ impl StdError for Error {
             Error::Utf8(_) => "A UTF-8 error occurred.",
             Error::Decoding(_) => "A decoding error occurred.",
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use crate::*;
+
+    /// ensure an Error::Decoding value can be formatted with std::fmt::Display without panic
+    #[test]
+    fn test_decoding_error() {
+        let test_error = Error::Decoding(std::borrow::Cow::Borrowed("some message"));
+        test_error.to_string();
+    }
+
+    /// ensure an Error::NotMultipart value can be formatted with std::fmt::Display without panic
+    #[test]
+    fn test_not_multipart() {
+        let test_error = Error::NotMultipart;
+        test_error.to_string(); // calling this should not panic
     }
 }
